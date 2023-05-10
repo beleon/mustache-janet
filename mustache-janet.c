@@ -90,7 +90,9 @@ static Janet mustache_render_helper(const char *template, size_t template_len, c
     if (file_name) {
         return janet_wrap_nil();
     } else {
-        return janet_stringv((const uint8_t *) data, len);
+        Janet result = janet_stringv((const uint8_t *) data, len);
+        free(data);
+        return result;
     }
 }
 
