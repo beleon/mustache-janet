@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stddef.h>
 
+#define MUSTACHE_JANET_ERROR_FAILED_TO_OPEN_PRE "mustache-janet error: failed to open file "
+
 static int flags = Mustach_With_AllExtensions;
 
 int mustach_render_cjson_file(const char *template, size_t length, const char *value, size_t buffer_length, int flags, FILE *file, char **err) {
@@ -35,15 +37,25 @@ int mustach_render_cjson(const char *template, size_t length, const char *value,
 }
 
 
-static Janet mustache_render_helper(const char *template, size_t template_len, const char *json, size_t json_len, const char *file_name) {
+static Janet mustache_render_helper(const char *template, size_t template_len, const char *json, size_t json_len, const char *file_name, size_t file_name_len) {
     char *err;
     char *data = NULL;
     size_t len;
     int mustach_result;
     if (file_name) {
         FILE *file;
-        if (!(file = fopen(file_name, "wb"))) {
-            janet_panicf("mustache-janet error: failed to open file %s", file_name);
+        char *file_name_nt = malloc(file_name_len + 1);
+        memcpy(file_name_nt, file_name, file_name_len);
+        file_name_nt[file_name_len] = '\0';
+        file = fopen(file_name_nt, "wb");
+        free(file_name_nt);
+        if (!file) {
+            size_t error_msg_len = sizeof MUSTACHE_JANET_ERROR_FAILED_TO_OPEN_PRE + file_name_len;
+            char *error_msg = janet_smalloc(error_msg_len);
+            memcpy(error_msg, MUSTACHE_JANET_ERROR_FAILED_TO_OPEN_PRE, sizeof MUSTACHE_JANET_ERROR_FAILED_TO_OPEN_PRE - 1);
+            memcpy(error_msg + sizeof MUSTACHE_JANET_ERROR_FAILED_TO_OPEN_PRE - 1, file_name, file_name_len);
+            error_msg[error_msg_len - 1] = '\0';
+            janet_panic(error_msg);
         }
         mustach_result = mustach_render_cjson_file(template, template_len, json, json_len, flags, file, &err);
     } else {
@@ -81,8 +93,9 @@ static Janet mustache_render_file(int32_t argc, Janet *argv) {
 
     size_t template_len = janet_string_length(template);
     size_t json_len = janet_string_length(json);
+    size_t file_name_len = janet_string_length(file_name);
 
-    return mustache_render_helper((const char *) template, template_len, (const char *) json, json_len, (const char *) file_name);
+    return mustache_render_helper((const char *) template, template_len, (const char *) json, json_len, (const char *) file_name, file_name_len);
 }
 
 static Janet mustache_render(int32_t argc, Janet *argv) {
@@ -93,7 +106,7 @@ static Janet mustache_render(int32_t argc, Janet *argv) {
     size_t template_len = janet_string_length(template);
     size_t json_len = janet_string_length(json);
 
-    return mustache_render_helper((const char *) template, template_len, (const char *) json, json_len, NULL);
+    return mustache_render_helper((const char *) template, template_len, (const char *) json, json_len, NULL, 0);
 }
 
 /****************/
