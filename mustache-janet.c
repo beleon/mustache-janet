@@ -83,7 +83,8 @@ static Janet mustache_render_helper(const char *template, size_t template_len, c
         case MUSTACH_ERROR_ITEM_NOT_FOUND: if (data) free(data); janet_panic("mustache-janet error: MUSTACH_ERROR_ITEM_NOT_FOUND");
         case MUSTACH_ERROR_PARTIAL_NOT_FOUND: if (data) free(data); janet_panic("mustache-janet error: MUSTACH_ERROR_PARTIAL_NOT_FOUND");
         case MUSTACH_ERROR_UNDEFINED_TAG: if (data) free(data); janet_panic("mustache-janet error: MUSTACH_ERROR_UNDEFINED_TAG");
-        default: if (data) free(data); janet_panicf("mustache-janet error: cJSON failed to parse at: %s", err);
+        case MUSTACH_ERROR_USER(1): if (data) free(data); janet_panicf("mustache-janet error: cJSON failed to parse at: %s", err);
+        default: if (data) free(data); janet_panicf("mustache-janet error: unknown mustach error: %d", mustach_result);
     }
 
     if (file_name) {
