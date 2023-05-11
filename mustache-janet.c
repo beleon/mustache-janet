@@ -12,11 +12,7 @@ int mustach_render_cjson_file(const char *template, size_t length, const char *v
     cJSON *root;
     int rc = MUSTACH_ERROR_USER(1);
     if (!(root = cJSON_ParseWithLength(value, buffer_length))) {
-        char *err_start = (char *)cJSON_GetErrorPtr();
-        size_t err_len = buffer_length - (err_start - value);
-        *err = janet_smalloc(err_len + 1);
-        memcpy(*err, err_start, err_len);
-        (*err)[err_len] = '\0';
+        *err = (char *)cJSON_GetErrorPtr();
         fclose(file);
         return rc;
     }
@@ -30,11 +26,7 @@ int mustach_render_cjson(const char *template, size_t length, const char *value,
     cJSON *root;
     int rc = MUSTACH_ERROR_USER(1);
     if (!(root = cJSON_ParseWithLength(value, buffer_length))) {
-        char *err_start = (char *)cJSON_GetErrorPtr();
-        size_t err_len = buffer_length - (err_start - value);
-        *err = janet_smalloc(err_len + 1);
-        memcpy(*err, err_start, err_len);
-        (*err)[err_len] = '\0';
+        *err = (char *)cJSON_GetErrorPtr();
         return rc;
     }
     rc = mustach_cJSON_mem(template, length, root, flags, result, size);
